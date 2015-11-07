@@ -13,5 +13,6 @@
 ::example 2 connect 4 w/ gravity. This will be run
 ::java -jar tournament.jar -w:7 -h:6 -k:4 -g:1 "%~dp0\AverageAI\AverageAI.class" "%~dp0\PoorAI\PoorAI.class" "%~dp0\GoodAI\GoodAI.class"
 ::java -jar tournament.jar -w:7 -h:6 -k:4 -g:1 cpp:"%~dp0\cppShell.exe" cpp:"%~dp0\cppShell.exe"
-java -jar tournament.jar -w:7 -h:6 -k:4 -g:1 "%~dp0\AverageAI\AverageAI.class" "%~dp0\DummyAI.class"
+::"java -jar tournament.jar -w:7 -h:6 -k:4 -g:1 "%~dp0\AverageAI\AverageAI.class" "%~dp0\DummyAI.class"
+java -jar tournament.jar -w:7 -h:6 -k:4 -g:1 cpp:"%~dp0\cppShell.exe" "%~dp0\DummyAI.class"
 pause 
