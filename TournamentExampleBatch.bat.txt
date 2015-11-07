@@ -1,0 +1,2 @@
+java -jar Tournament.jar c2.exe DummyAI.class c2.exe c2.exe c2.exe c2.exe DummyAI.class
+pause
