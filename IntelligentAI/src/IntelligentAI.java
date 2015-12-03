@@ -2,27 +2,25 @@ import connectK.BoardModel;
 import connectK.CKPlayer;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.regex.Matcher;
+import java.util.Set;
+
 
 public class IntelligentAI extends CKPlayer
 {
+	/* Declare Variables */
 	public static final boolean DEBUG_MODE = true;
-	public static int TIME_OFFSET;
 	public static final double EMPTY_ROW_WEIGHT = 0.5;
 	public static final double EMPTY_COLUMN_WEIGHT = 0.5;
-	public static final double EMPTY_DIAGNOL_WEIGHT = 1.25;
+	public static final double EMPTY_DIAG_WEIGHT = 1.25;
 
+	private int timeOffset;
 	private int depthLimit = 1;
 	private int maximumDept = 7;
-	private Integer lower = Integer.MIN_VALUE;
-	private Integer upper = Integer.MAX_VALUE;
-	private Integer scoreLoseWin = 100000000;
-	private Point lastPoint = new Point();
 	private int myPlayer = -1;
 	private int otherPlayer = -1;
-
 	private int KAchieve = 0;
 	private int K_1Block = -1;
 	private int K_1FreeTwoSide = -2; // Free two side
@@ -30,10 +28,16 @@ public class IntelligentAI extends CKPlayer
 	private int K_2FreeTwoUnoccupied = -5; // At least two space both or left or right
 	private int K_2FreeOne = -6; // XXX_X or X_XXX
 
-	// startTime
+	private Integer lower = Integer.MIN_VALUE;
+	private Integer upper = Integer.MAX_VALUE;
+	private Integer scoreLoseWin = 100000000;
+	private Point lastPoint = new Point();
+
 	private long startTime;
 	private int myDeadLine;
 
+
+	/* Default Dummy Methods */
 	public IntelligentAI(byte player, BoardModel state)
 	{
 		super(player, state);
@@ -46,31 +50,44 @@ public class IntelligentAI extends CKPlayer
 		try
 		{
 			if (DEBUG_MODE)
+			{
 				System.out.println("Starting thinking");
+			}
 			for (int i = 1; i < maximumDept; ++i)
 			{
 				depthLimit = i + 1;
 				Point newAction = getAction(state);
 				if (DEBUG_MODE)
+				{
 					System.out.println("Depth limit " + Integer.toString(depthLimit) + " with action : " +
 							lastPoint.toString());
+				}
+
 				// If we do not stop due to out of time, we should save this result
 				if (!outOfTime())
 				{
 					if (DEBUG_MODE)
+					{
 						System.out.println("An action is saved.");
+					}
 
 					if (newAction != null)
+					{
 						lastPoint = newAction;
-				} else
+					}
+				}
+				else
 				{
 					return lastPoint;
 				}
 			}
 
 			if (DEBUG_MODE)
+			{
 				System.out.println("Done thinking");
-		} catch (Exception e)
+			}
+		}
+		catch (Exception e)
 		{
 			if (DEBUG_MODE)
 			{
@@ -87,28 +104,38 @@ public class IntelligentAI extends CKPlayer
 	{
 		// Set the start time and deadline
 		myDeadLine = deadline;
-		TIME_OFFSET = deadline * 25 / 100;
+		timeOffset = deadline * 25 / 100;
 		startTime = System.currentTimeMillis();
 
 		if (DEBUG_MODE)
-			System.out.println("Deadline = " + deadline + " - Offset = " + TIME_OFFSET);
+		{
+			System.out.println("Deadline = " + deadline + " - Offset = " + timeOffset);
+		}
 		return getMove(state);
 	}
 
-	// This function helps print a list of children starting from a node
-	Point getAction(BoardModel state)
+
+	/* Helper methods to get the right moves */
+	/**
+	 *	This function helps print a list of children starting from a node
+	 */
+	private Point getAction(BoardModel state)
 	{
 		// This always is the max node, my player;
 		// Get the current player turn
 
 		// If we are out of time, stop
 		if (outOfTime())
+		{
 			return null;
+		}
 
 		if (state.spacesLeft == state.getHeight() * state.getWidth())
 		{
 			if (state.gravityEnabled())
+			{
 				return new Point(state.getWidth() / 2, 0);
+			}
 			return new Point(state.getWidth() / 2, state.getHeight() / 2);
 		}
 
@@ -152,14 +179,17 @@ public class IntelligentAI extends CKPlayer
 		}
 
 		if (DEBUG_MODE)
+		{
 			System.out.println(action);
-//		printChildren(children);
+		}
 
 		return action;
 	}
 
-	// This one return the current player's turn
-	byte currentTurn(BoardModel state)
+	/**
+	 *	This one return the current player's turn
+	 */
+	private byte currentTurn(BoardModel state)
 	{
 		int player1 = 0;
 		int player2 = 0;
@@ -170,7 +200,8 @@ public class IntelligentAI extends CKPlayer
 				if (state.getSpace(i, j) == 1)
 				{
 					player1 += 1;
-				} else if (state.getSpace(i, j) == 2)
+				}
+				else if (state.getSpace(i, j) == 2)
 				{
 					player2 += 1;
 				}
@@ -181,14 +212,18 @@ public class IntelligentAI extends CKPlayer
 		{
 			// player 1 go first
 			return 1;
-		} else
+		}
+		else
 		{
 			// now player 2's turn
 			return 2;
 		}
 	}
 
-	boolean validPoint(BoardModel state, Point pt)
+	/**
+	 * Check whether the point is valid or not with given state and point
+	 */
+	private boolean validPoint(BoardModel state, Point pt)
 	{
 		int x = (int) pt.getX();
 		int y = (int) pt.getY();
@@ -205,7 +240,10 @@ public class IntelligentAI extends CKPlayer
 		return true;
 	}
 
-	boolean validPoint(BoardModel state, int x, int y)
+	/**
+	 * Check whether x, y is valid or not with given state and x,y
+	 */
+	private boolean validPoint(BoardModel state, int x, int y)
 	{
 		int height = state.getHeight();
 		int width = state.getWidth();
@@ -220,7 +258,10 @@ public class IntelligentAI extends CKPlayer
 		return true;
 	}
 
-	void printChildren(List<BoardModel> children)
+	/**
+	 * Print out all the children (DEBUG ONLY)
+	 */
+	private void printChildren(List<BoardModel> children)
 	{
 		for (int i = 0; i < children.size(); ++i)
 		{
@@ -235,7 +276,10 @@ public class IntelligentAI extends CKPlayer
 		}
 	}
 
-	void printMap(BoardModel state)
+	/**
+	 * Print out the map (DEBUG ONLY)
+	 */
+	private void printMap(BoardModel state)
 	{
 		String rs = state.toString();
 
@@ -243,22 +287,33 @@ public class IntelligentAI extends CKPlayer
 		{
 			if (DEBUG_MODE)
 			{
-				if (rs.charAt(i) == '0') System.out.print(" ");
-				if (rs.charAt(i) == '1') System.out.print("x");
-				if (rs.charAt(i) == '2') System.out.print("o");
-				if (rs.charAt(i) == '\n') System.out.print("\n");
+				if (rs.charAt(i) == '0')
+				{
+					System.out.print(" ");
+				}
+				if (rs.charAt(i) == '1')
+				{
+					System.out.print("x");
+				}
+				if (rs.charAt(i) == '2')
+				{
+					System.out.print("o");
+				}
+				if (rs.charAt(i) == '\n')
+				{
+					System.out.print("\n");
+				}
 			}
 		}
 	}
 
-	/* ======================================================= */
-
-
-	// Detect if this horizontal is winning path with assumption is that
-	//  Direction
-	//  0   1  2
-	//     f1  3
-	Integer getFeature(BoardModel state, Point f, int dire, int current)
+	/**
+	 * Detect if this horizontal is winning path with assumption is that
+	 * Direction
+	 * 0   1  2
+	 *     f1  3
+ 	 */
+	private Integer getFeature(BoardModel state, Point f, int dire, int current)
 	{
 
 		int oppoCurrent = (current == 1) ? 2 : 1;
@@ -284,7 +339,8 @@ public class IntelligentAI extends CKPlayer
 			{
 				++i;
 				++length;
-			} else
+			}
+			else
 			{
 				break;
 			}
@@ -303,7 +359,8 @@ public class IntelligentAI extends CKPlayer
 			{
 				++i;
 				++length;
-			} else
+			}
+			else
 			{
 				break;
 			}
@@ -314,7 +371,8 @@ public class IntelligentAI extends CKPlayer
 		if (length >= K)
 		{
 			return KAchieve;
-		} else if (length == K - 1)
+		}
+		else if (length == K - 1)
 		{
 			boolean headBlock = false;
 			boolean tailBlock = false;
@@ -338,14 +396,17 @@ public class IntelligentAI extends CKPlayer
 			if (headBlock && tailBlock)
 			{
 				return K_1Block;
-			} else if (!headBlock && !tailBlock)
+			}
+			else if (!headBlock && !tailBlock)
 			{
 				return K_1FreeTwoSide;
-			} else
+			}
+			else
 			{
 				return K_1FreeOneSide;
 			}
-		} else if (length == K - 2)
+		}
+		else if (length == K - 2)
 		{
 
 			boolean headBlock = false;
@@ -365,13 +426,15 @@ public class IntelligentAI extends CKPlayer
 					state.getSpace(head2X, head2Y) == current)
 			{
 				return K_2FreeOne;
-			} else if (validPoint(state, tailX, tailY) &&
+			}
+			else if (validPoint(state, tailX, tailY) &&
 					validPoint(state, tail2X, tail2Y) &&
 					state.getSpace(tailX, tailY) == 0 &&
 					state.getSpace(tail2X, tail2Y) == current)
 			{
 				return K_2FreeOne;
-			} else
+			}
+			else
 			{
 				if (!validPoint(state, headX, headY) ||
 						state.getSpace(headX, headY) == oppoCurrent)
@@ -393,10 +456,11 @@ public class IntelligentAI extends CKPlayer
 		}
 		return length;
 	}
-	
-	/* ======================================================= */
 
-	boolean goForIt(BoardModel state, int x, int y, int dire)
+	/**
+	 *
+	 */
+	private boolean goForIt(BoardModel state, int x, int y, int dire)
 	{
 		int[] xOffset = {-1, 0, +1, +1};
 		int[] yOffset = {+1, +1, +1, 0};
@@ -407,17 +471,22 @@ public class IntelligentAI extends CKPlayer
 		if (!validPoint(state, newX, newY))
 		{
 			return true;
-		} else
+		}
+		else
 		{
 			if (state.getSpace(newX, newY) != state.getSpace(x, y))
+			{
 				return true;
+			}
 		}
 
 		return false;
 	}
 
-	// This children function deal with gravity on
-	List<BoardModel> getChildrenWithGravity(BoardModel state, int current, boolean isMax)
+	/**
+	 *	This children function deal with gravity on
+	 */
+	private List<BoardModel> getChildrenWithGravity(BoardModel state, int current, boolean isMax)
 	{
 
 		List<BoardModel> children = new ArrayList<BoardModel>();
@@ -437,7 +506,8 @@ public class IntelligentAI extends CKPlayer
 						if (current == 1)
 						{
 							value = 1;
-						} else if (current == 2)
+						}
+						else if (current == 2)
 						{
 							value = 2;
 						}
@@ -451,10 +521,15 @@ public class IntelligentAI extends CKPlayer
 		return children;
 	}
 
-	List<BoardModel> getChildren(BoardModel state, int current, boolean isMax)
+	/**
+	 *
+	 */
+	private List<BoardModel> getChildren(BoardModel state, int current, boolean isMax)
 	{
 		if (state.gravityEnabled())
+		{
 			return getChildrenWithGravity(state, current, isMax);
+		}
 		List<BoardModel> children = new ArrayList<BoardModel>();
 
 		int numOffset = 8;
@@ -486,7 +561,8 @@ public class IntelligentAI extends CKPlayer
 								if (current == 1)
 								{
 									value = 1;
-								} else if (current == 2)
+								}
+								else if (current == 2)
 								{
 									value = 2;
 								}
@@ -507,16 +583,16 @@ public class IntelligentAI extends CKPlayer
 		return children;
 	}
 
-	// alpha-beta pruning
-	Integer alphaBeta(BoardModel state,
-	                  boolean isMax,
-	                  Integer alpha,
-	                  Integer beta,
-	                  int depth)
+	/**
+	 *	alpha-beta pruning
+	 */
+	private Integer alphaBeta(BoardModel state, boolean isMax, Integer alpha, Integer beta, int depth)
 	{
-
 		// If we are out of time, stop right away
-		if (outOfTime()) return 0;
+		if (outOfTime())
+		{
+			return 0;
+		}
 
 		byte winner = state.winner();
 
@@ -525,7 +601,8 @@ public class IntelligentAI extends CKPlayer
 			if (winner == myPlayer)
 			{
 				return scoreLoseWin;
-			} else
+			}
+			else
 			{
 				return -scoreLoseWin;
 			}
@@ -563,7 +640,8 @@ public class IntelligentAI extends CKPlayer
 				}
 			}
 			return v;
-		} else
+		}
+		else
 		{
 			// This is min node
 			List<BoardModel> children = getChildren(state, currentPlayer, false);
@@ -589,18 +667,22 @@ public class IntelligentAI extends CKPlayer
 		}
 	}
 
-	// This function checks if it's out of time
-	boolean outOfTime()
+	/**
+	 *	This function checks if it's out of time
+	 */
+	private boolean outOfTime()
 	{
 		long stopTime = System.currentTimeMillis();
-		if (stopTime - startTime > myDeadLine - TIME_OFFSET)
+		if (stopTime - startTime > myDeadLine - timeOffset)
 		{
 			return true;
 		}
 		return false;
 	}
 
-	/* Score Evaluation */
+	/**
+	 *	Score Evaluation
+	 */
 	private Integer staticEval(BoardModel state)
 	{
 		Integer score = 0;
@@ -620,14 +702,18 @@ public class IntelligentAI extends CKPlayer
 		return score;
 	}
 
-	Integer winMove(BoardModel state)
+	/**
+	 *
+	 */
+	private Integer winMove(BoardModel state)
 	{
 		int value = state.winner();
 
 		if (value == myPlayer)
 		{
 			return 1;
-		} else if (value == otherPlayer)
+		}
+		else if (value == otherPlayer)
 		{
 			return -1;
 		}
@@ -635,10 +721,10 @@ public class IntelligentAI extends CKPlayer
 	}
 
 
-	/*
-	 * This one helps counting the number of connected lines
+	/**
+	 *  This one helps counting the number of connected lines
 	 */
-	Integer numberOfConnectLine(BoardModel state)
+	private Integer numberOfConnectLine(BoardModel state)
 	{
 		Integer meCount = 0;
 		Integer oppoCount = 0;
@@ -664,7 +750,8 @@ public class IntelligentAI extends CKPlayer
 							if (current == myPlayer)
 							{
 								meCount += 1;
-							} else
+							}
+							else
 							{
 								oppoCount += 1;
 							}
@@ -677,7 +764,10 @@ public class IntelligentAI extends CKPlayer
 		return meCount - oppoCount;
 	}
 
-	Integer noname(BoardModel state)
+	/**
+	 *
+	 */
+	private Integer noname(BoardModel state)
 	{
 		Integer meScore = 0;
 		Integer oppoScore = 0;
@@ -698,31 +788,31 @@ public class IntelligentAI extends CKPlayer
 							{
 								// Only about length
 								value = f * 15;
-							} else
+							}
+							else
 							{
 								// feature
-//								int KAchieve = 0;
-//								int K_1Block = -1;
-//								int K_1FreeTwoSide = -2; // Free two side
-//								int K_1FreeOneSide = -3; // Free one side
-//								int K_2FreeTwoUnoccupied = -5; // At least two space both or left or right
-//								int K_2FreeOne = -6; // XXX_X or X_XXX
 								if (f == K_1Block)
 								{
 									value = 30;
-								} else if (f == K_1FreeOneSide)
+								}
+								else if (f == K_1FreeOneSide)
 								{
 									value = 80;
-								} else if (f == K_1FreeTwoSide)
+								}
+								else if (f == K_1FreeTwoSide)
 								{
 									value = 150;
-								} else if (f == K_2FreeTwoUnoccupied)
+								}
+								else if (f == K_2FreeTwoUnoccupied)
 								{
 									value = 60;
-								} else if (f == K_2FreeOne)
+								}
+								else if (f == K_2FreeOne)
 								{
 									value = 20;
-								} else if (f == KAchieve)
+								}
+								else if (f == KAchieve)
 								{
 									value = scoreLoseWin;
 								}
@@ -731,7 +821,8 @@ public class IntelligentAI extends CKPlayer
 							if (current == myPlayer)
 							{
 								meScore += value;
-							} else
+							}
+							else
 							{
 								oppoScore += value;
 							}
@@ -744,8 +835,10 @@ public class IntelligentAI extends CKPlayer
 		return meScore - oppoScore;
 	}
 
-	// This one help favor the one at the center than at the boundary
-	Integer piecesNearCenter(BoardModel state)
+	/**
+	 *	This one help favor the one at the center than at the boundary
+	 */
+	private Integer piecesNearCenter(BoardModel state)
 	{
 		Integer meScore = 0;
 		Integer oppoScore = 0;
@@ -762,7 +855,8 @@ public class IntelligentAI extends CKPlayer
 				if (value == myPlayer)
 				{
 					meScore += Math.abs(i - centerX) + Math.abs(j - centerY);
-				} else if (value == otherPlayer)
+				}
+				else if (value == otherPlayer)
 				{
 					oppoScore += Math.abs(i - centerX) + Math.abs(j - centerY);
 				}
@@ -821,25 +915,37 @@ public class IntelligentAI extends CKPlayer
 				try
 				{
 					if (state.getSpace(lastMove.x - off, lastMove.y - off) == otherPlayer)
+					{
 						isEmptyLeftDiag = false;
+					}
 					else if (state.getSpace(lastMove.x + off, lastMove.y + off) == otherPlayer)
+					{
 						isEmptyLeftDiag = false;
+					}
 
 					if (state.getSpace(lastMove.x + off, lastMove.y - off) == otherPlayer)
+					{
 						isEmptyRightDiag = false;
+					}
 					else if (state.getSpace(lastMove.x - off, lastMove.y + off) == otherPlayer)
+					{
 						isEmptyRightDiag = false;
+					}
 				}
-				catch (Exception e) {}
+				catch (Exception e)
+				{
+				}
 			}
 			score = (isEmptyLeftDiag) ? (score + 2) : (score - 1);
-			score = (int) Math.ceil(EMPTY_DIAGNOL_WEIGHT * score);
+			score = (int) Math.ceil(EMPTY_DIAG_WEIGHT * score);
 			score = (isEmptyRightDiag) ? (score + 2) : (score - 1);
-			score = (int) Math.ceil(EMPTY_DIAGNOL_WEIGHT * score);
+			score = (int) Math.ceil(EMPTY_DIAG_WEIGHT * score);
 
 			return score;
 		}
 		else
-			return (int) Math.ceil((-3) * (EMPTY_COLUMN_WEIGHT + EMPTY_ROW_WEIGHT + EMPTY_DIAGNOL_WEIGHT));
+		{
+			return (int) Math.ceil((-3) * (EMPTY_COLUMN_WEIGHT + EMPTY_ROW_WEIGHT + EMPTY_DIAG_WEIGHT));
+		}
 	}
 }
