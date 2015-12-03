@@ -1,0 +1,7 @@
+Alpha Beta Prune:
+1) Loop through the whole board and populate a list of available moves (Point objects) -- goes from center to outside by layers
+2) Initialize a HashMap for all available moves where key = move/Point -- value = a HashMap with 'alpha', 'beta', 'board', and 'isPruned' keys (by default:
+    'alpha' = Integer.MIN_VALUE, 'beta' = Integer.MAX_VALUE, 'board' = BoardModel, 'isPruned' = false) -- O(K) memory where K = available moves
+3) Initialize an ArrayList with HashMaps in which the first one is level 1, 2nd one is level 2, etc -- 5 levels (odd since we want to do goal test for our state)
+4) Get the last item in ArrayList above (5th level) and update all the parent moves using recursion
+5) Store the current max score Point (always) and check time to return
